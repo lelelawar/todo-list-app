@@ -30,7 +30,7 @@ function TaskStats({ total, active, completed }) {
           <div
             className={`mb-3 inline-flex rounded-lg p-2 ${stat.bg} ${stat.color}`}
           >
-            <span className="text-lg font-bold">#</span>
+            <span className="text-lg font-bold">*</span>
           </div>
 
           <h2 className="text-3xl font-bold text-slate-900">

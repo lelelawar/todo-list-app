@@ -1,44 +1,67 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import Header from './components/Header'
 import TaskStats from './components/TaskStats'
 import TaskForm from './components/TaskForm'
 import TaskFilter from './components/TaskFilter'
 import TaskList from './components/TaskList'
+import TaskSearch from './components/TaskSearch'
 
 function App() {
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: 'Learn React Fundamentals',
-      completed: true,
-    },
-    {
-      id: 2,
-      title: 'Build To-Do List UI',
-      completed: false,
-    },
-    {
-      id: 3,
-      title: 'Practice useState Hook',
-      completed: false,
-    },
-  ])
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const savedTasks = localStorage.getItem('todo-list-tasks')
+
+      if (savedTasks !== null) {
+        return JSON.parse(savedTasks)
+      }
+
+      return [
+        {
+          id: 1,
+          title: 'Learn React Fundamentals',
+          completed: true,
+        },
+        {
+          id: 2,
+          title: 'Build To-Do List UI',
+          completed: false,
+        },
+        {
+          id: 3,
+          title: 'Practice useState Hook',
+          completed: false,
+        },
+      ]
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
+      return []
+    }
+  })
 
   const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
 
-  // Menambahkan tugas
+  // Simpan tugas ke LocalStorage
+  useEffect(() => {
+    localStorage.setItem(
+      'todo-list-tasks',
+      JSON.stringify(tasks)
+    )
+  }, [tasks])
+
+  // Tambah tugas
   function addTask(title) {
     const newTask = {
       id: crypto.randomUUID(),
-      title: title,
+      title,
       completed: false,
     }
 
     setTasks((prevTasks) => [...prevTasks, newTask])
   }
 
-  // Mengubah status tugas
+  // Tandai tugas selesai
   function toggleTask(id) {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -49,14 +72,14 @@ function App() {
     )
   }
 
-  // Menghapus tugas
+  // Hapus tugas
   function deleteTask(id) {
     setTasks((prevTasks) =>
       prevTasks.filter((task) => task.id !== id)
     )
   }
 
-  // Mengedit tugas
+  // Edit tugas
   function editTask(id, newTitle) {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -67,19 +90,27 @@ function App() {
     )
   }
 
-  // Filter tugas
+  // Filter dan pencarian
   const filteredTasks = tasks.filter((task) => {
-    if (filter === 'active') return !task.completed
-    if (filter === 'completed') return task.completed
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'active' && !task.completed) ||
+      (filter === 'completed' && task.completed)
 
-    return true
+    const matchesSearch = task.title
+      .toLowerCase()
+      .includes(search.toLowerCase())
+
+    return matchesFilter && matchesSearch
   })
 
-  // Statistik tugas
+  // Statistik
   const totalTasks = tasks.length
+
   const completedTasks = tasks.filter(
     (task) => task.completed
   ).length
+
   const activeTasks = totalTasks - completedTasks
 
   return (
@@ -105,6 +136,7 @@ function App() {
         </section>
 
         <section className="space-y-5">
+
           <div>
             <h2 className="mb-3 text-lg font-bold text-slate-900">
               Add New Task
@@ -113,14 +145,21 @@ function App() {
             <TaskForm onAdd={addTask} />
           </div>
 
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-            <h2 className="text-lg font-bold text-slate-900">
-              Your Tasks
-            </h2>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <h2 className="text-lg font-bold text-slate-900">
+                Your Tasks
+              </h2>
 
-            <TaskFilter
-              filter={filter}
-              onFilterChange={setFilter}
+              <TaskFilter
+                filter={filter}
+                onFilterChange={setFilter}
+              />
+            </div>
+
+            <TaskSearch
+              search={search}
+              onSearchChange={setSearch}
             />
           </div>
 
@@ -130,6 +169,7 @@ function App() {
             onDelete={deleteTask}
             onEdit={editTask}
           />
+
         </section>
 
       </div>
